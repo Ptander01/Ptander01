@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* CSS Variables for theming */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  --border-color: #e2e8f0;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  --scrollbar-track: rgba(0, 0, 0, 0.05);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+}
+
+:root.dark {
+  /* Dark theme */
+  --bg-primary: #0f1f33;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-hover: #475569;
+  --border-color: #334155;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --glass-bg: rgba(15, 31, 51, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glass card styles - theme aware */
+.glass-card {
+  backdrop-filter: blur(20px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+}
+
+.glass-card-solid {
+  backdrop-filter: blur(20px);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+}
+
+/* Legacy dark-only glass card for backwards compatibility */
+.glass-card-dark {
+  backdrop-filter: blur(20px);
+  background: rgba(15, 31, 51, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.glass-card-light {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+/* Progress bar gradient */
+.progress-gradient {
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+}
+
+/* Map background */
+.map-dark-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.map-light-bg {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+}
+
+/* Timeline slider */
+.timeline-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border: none;
+}
+
+/* Company colors */
+.company-xai { background-color: #3b82f6; }
+.company-openai { background-color: #10b981; }
+.company-aws { background-color: #f97316; }
+.company-microsoft { background-color: #06b6d4; }
+.company-google { background-color: #8b5cf6; }
+.company-meta { background-color: #0668e1; }
+
+/* Site marker pulse animation */
+@keyframes site-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.site-marker-active {
+  animation: site-pulse 2s infinite;
+}
+
+/* Theme toggle animation */
+@keyframes theme-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.theme-toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle-icon:hover {
+  transform: rotate(30deg);
+}
+
+/* Scrollbar styling - theme aware */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* MapLibre overrides */
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}
+
+/* Smooth transitions for theme change */
+.theme-transition {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Sidebar styles */
+.sidebar-bg {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.sidebar-header-bg {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+/* Input styles */
+.input-themed {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.input-themed::placeholder {
+  color: var(--text-muted);
+}
+
+.input-themed:focus {
+  outline: none;
+  ring-color: #3b82f6;
+}
+
+/* Card hover states */
+.card-hover {
+  transition: background-color 0.15s ease;
+}
+
+:root .card-hover:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:root.dark .card-hover:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}

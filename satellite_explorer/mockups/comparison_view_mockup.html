@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCII - Imagery Comparison View</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * { font-family: 'Inter', sans-serif; }
+
+        .comparison-container {
+            position: relative;
+            overflow: hidden;
+            cursor: ew-resize;
+        }
+
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+            cursor: ew-resize;
+            z-index: 30;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .comparison-slider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .comparison-slider::after {
+            content: '\f337';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #3b82f6;
+            font-size: 16px;
+        }
+
+        .image-left, .image-right {
+            position: absolute;
+            inset: 0;
+        }
+
+        .image-left {
+            clip-path: inset(0 50% 0 0);
+        }
+
+        .satellite-img-old {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            position: relative;
+        }
+
+        .satellite-img-old::after {
+            content: 'Jan 15, 2025 - Early Construction';
+            position: absolute;
+            bottom: 60px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .satellite-img-new {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
+            position: relative;
+        }
+
+        .satellite-img-new::after {
+            content: 'Feb 22, 2026 - Active Operations';
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* Simulated building footprints */
+        .building-old {
+            position: absolute;
+            background: rgba(100,100,100,0.6);
+            border: 1px solid rgba(150,150,150,0.5);
+        }
+
+        .building-new {
+            position: absolute;
+            background: rgba(59,130,246,0.4);
+            border: 2px solid rgba(59,130,246,0.8);
+        }
+
+        .equipment-marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #fbbf24;
+            box-shadow: 0 0 10px rgba(251,191,36,0.5);
+        }
+
+        .change-highlight {
+            position: absolute;
+            border: 3px dashed #10b981;
+            background: rgba(16,185,129,0.1);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #10b981; }
+            50% { border-color: #34d399; }
+        }
+
+        .metric-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+
+        .delta-positive {
+            color: #10b981;
+        }
+
+        .delta-negative {
+            color: #ef4444;
+        }
+
+        .timeline-marker {
+            transition: all 0.3s ease;
+        }
+
+        .timeline-marker:hover {
+            transform: scale(1.3);
+        }
+
+        .timeline-marker.active {
+            transform: scale(1.3);
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-slate-800 text-white px-6 py-3 flex items-center justify-between border-b border-slate-700">
+        <div class="flex items-center gap-4">
+            <a href="dcii_explorer_mockup.html" class="flex items-center gap-2 hover:text-blue-400 transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span class="text-sm">Back to Explorer</span>
+            </a>
+            <span class="text-slate-600">|</span>
+            <div class="flex items-center gap-2">
+                <i class="fas fa-satellite text-blue-400"></i>
+                <span class="font-semibold">Imagery Comparison</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-slate-400 text-sm">xAI Memphis - Colossus 1 & 2</span>
+            <button class="px-4 py-2 bg-blue-500 rounded-lg text-sm font-medium hover:bg-blue-600">
+                <i class="fas fa-download mr-2"></i>Export Comparison
+            </button>
+        </div>
+    </header>
+
+    <div class="flex h-[calc(100vh-56px)]">
+
+        <!-- Main Comparison View -->
+        <main class="flex-1 flex flex-col">
+
+            <!-- Comparison Container -->
+            <div class="flex-1 comparison-container relative" id="comparisonContainer">
+
+                <!-- Before Image (Left) -->
+                <div class="image-left" id="imageLeft">
+                    <div class="satellite-img-old w-full h-full">
+                        <!-- Simulated old state buildings -->
+                        <div class="building-old" style="left: 25%; top: 35%; width: 120px; height: 80px;"></div>
+                        <div class="building-old" style="left: 40%; top: 40%; width: 60px; height: 40px;"></div>
+                        <!-- Foundation work -->
+                        <div style="position: absolute; left: 55%; top: 35%; width: 100px; height: 70px; border: 2px dashed rgba(150,150,150,0.5); background: rgba(80,80,80,0.3);"></div>
+                    </div>
+                    <div class="absolute top-4 left-4 bg-slate-800/90 px-4 py-2 rounded-lg">
+                        <div class="text-white font-semibold">Before</div>
+                        <div class="text-blue-400 text-sm">Jan 15, 2025</div>
+                    </div>
+                </div>
+
+                <!-- After Image (Right) -->
+                <div class="image-right">
+                    <div class="satellite-img-new w-full h-full">
+                        <!-- Simulated new state buildings - more structures -->
+                        <div class="building-new" style="left: 25%; top: 35%; width: 120px; height: 80px;"></div>
+                        <div class="building-new" style="left: 40%; top: 40%; width: 80px; height: 60px;"></div>
+                        <div class="building-new" style="left: 55%; top: 32%; width: 140px; height: 100px;"></div>
+                        <div class="building-new" style="left: 60%; top: 55%; width: 100px; height: 70px;"></div>
+
+                        <!-- Equipment markers -->
+                        <div class="equipment-marker" style="left: 28%; top: 50%;"></div>
+                        <div class="equipment-marker" style="left: 32%; top: 52%;"></div>
+                        <div class="equipment-marker" style="left: 36%; top: 51%;"></div>
+                        <div class="equipment-marker" style="left: 58%; top: 58%;"></div>
+                        <div class="equipment-marker" style="left: 62%; top: 60%;"></div>
+                        <div class="equipment-marker" style="left: 66%; top: 59%;"></div>
+                        <div class="equipment-marker" style="left: 70%; top: 61%;"></div>
+
+                        <!-- Change highlights -->
+                        <div class="change-highlight" style="left: 53%; top: 30%; width: 150px; height: 110px; border-radius: 8px;"></div>
+                        <div class="change-highlight" style="left: 58%; top: 53%; width: 110px; height: 80px; border-radius: 8px;"></div>
+                    </div>
+                    <div class="absolute top-4 right-4 bg-slate-800/90 px-4 py-2 rounded-lg">
+                        <div class="text-white font-semibold">After</div>
+                        <div class="text-green-400 text-sm">Feb 22, 2026</div>
+                    </div>
+                </div>
+
+                <!-- Comparison Slider -->
+                <div class="comparison-slider" id="slider" style="left: 50%;"></div>
+
+                <!-- Change Detection Legend -->
+                <div class="absolute bottom-20 left-4 metric-card rounded-lg p-4 shadow-xl">
+                    <div class="text-sm font-semibold text-slate-700 mb-3">Change Detection</div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-4 border-2 border-dashed border-emerald-500 bg-emerald-100 rounded"></div>
+                            <span class="text-slate-600">New Construction</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-blue-500 opacity-40 border-2 border-blue-500 rounded"></div>
+                            <span class="text-slate-600">Building Footprint</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-yellow-400 rounded-full"></div>
+                            <span class="text-slate-600">Equipment Detected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Panel -->
+                <div class="absolute bottom-20 right-4 metric-card rounded-lg p-4 shadow-xl w-72">
+                    <div class="text-sm font-semibold text-slate-700 mb-3">Changes Detected (13 months)</div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">Building Area</span>
+                            <div class="text-right">
+                                <span class="font-semibold text-slate-900">+520,000 sqft</span>
+                                <span class="text-xs text-emerald-500 ml-1">↑ 210%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">Power Equipment</span>
+                            <div class="text-right">
+                                <span class="font-semibold text-slate-900">+19 units</span>
+                                <span class="text-xs text-emerald-500 ml-1">new</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">Cooling Infrastructure</span>
+                            <div class="text-right">
+                                <span class="font-semibold text-slate-900">+12 towers</span>
+                                <span class="text-xs text-emerald-500 ml-1">new</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">Est. Capacity</span>
+                            <div class="text-right">
+                                <span class="font-semibold text-slate-900">~300 MW</span>
+                                <span class="text-xs text-emerald-500 ml-1">↑ from ~50</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Mode Toggle -->
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-800/90 rounded-lg p-1 flex gap-1">
+                    <button class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm font-medium">
+                        <i class="fas fa-columns mr-1"></i> Swipe
+                    </button>
+                    <button class="px-4 py-2 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-700">
+                        <i class="fas fa-layer-group mr-1"></i> Overlay
+                    </button>
+                    <button class="px-4 py-2 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-700">
+                        <i class="fas fa-th-large mr-1"></i> Side-by-Side
+                    </button>
+                    <button class="px-4 py-2 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-700">
+                        <i class="fas fa-magic mr-1"></i> AI Diff
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Timeline with Image Markers -->
+            <div class="bg-slate-800 px-6 py-4 border-t border-slate-700">
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-slate-400 w-20">Before:</div>
+                    <div class="flex-1 relative h-8">
+                        <!-- Timeline Track -->
+                        <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-600 rounded-full -translate-y-1/2"></div>
+
+                        <!-- Image Markers (clickable) -->
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker active w-5 h-5 bg-blue-500 rounded-full border-2 border-white cursor-pointer" style="left: 0%;" title="Jan 15, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 8%;" title="Feb 12, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 16%;" title="Mar 10, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 24%;" title="Apr 7, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 32%;" title="May 5, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 40%;" title="Jun 2, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 48%;" title="Jul 1, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 56%;" title="Jul 28, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 64%;" title="Aug 25, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 72%;" title="Sep 22, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 80%;" title="Oct 20, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 88%;" title="Nov 27, 2025"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 96%;" title="Feb 22, 2026"></div>
+
+                        <!-- Date Labels -->
+                        <div class="absolute -bottom-5 text-xs text-slate-500" style="left: 0%;">Jan 25</div>
+                        <div class="absolute -bottom-5 text-xs text-slate-500" style="left: 48%;">Jul 25</div>
+                        <div class="absolute -bottom-5 text-xs text-slate-500" style="left: 96%;">Feb 26</div>
+                    </div>
+                    <div class="text-white text-sm w-28 text-right">Jan 15, 2025</div>
+                </div>
+
+                <div class="flex items-center gap-4 mt-4">
+                    <div class="text-sm text-slate-400 w-20">After:</div>
+                    <div class="flex-1 relative h-8">
+                        <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-600 rounded-full -translate-y-1/2"></div>
+
+                        <!-- Same markers but different selection -->
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 0%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 8%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 16%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 24%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 32%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 40%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 48%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 56%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 64%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 72%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 80%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker w-4 h-4 bg-slate-400 rounded-full border-2 border-white cursor-pointer" style="left: 88%;"></div>
+                        <div class="absolute top-1/2 -translate-y-1/2 timeline-marker active w-5 h-5 bg-green-500 rounded-full border-2 border-white cursor-pointer" style="left: 96%;"></div>
+                    </div>
+                    <div class="text-white text-sm w-28 text-right">Feb 22, 2026</div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Right Panel - Change Details -->
+        <aside class="w-80 bg-slate-800 border-l border-slate-700 flex flex-col">
+            <div class="p-4 border-b border-slate-700">
+                <h2 class="text-white font-semibold">Detected Changes</h2>
+                <p class="text-slate-400 text-sm mt-1">13 months of construction</p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+                <!-- Change Card 1 -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-emerald-500/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                        <span class="text-emerald-400 text-sm font-medium">New Structure</span>
+                    </div>
+                    <h4 class="text-white font-medium">Building 2 - Data Hall</h4>
+                    <p class="text-slate-400 text-sm mt-1">Complete build from foundation to operational</p>
+                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-600/50 rounded px-2 py-1">
+                            <span class="text-slate-400">Area:</span>
+                            <span class="text-white ml-1">180,000 sqft</span>
+                        </div>
+                        <div class="bg-slate-600/50 rounded px-2 py-1">
+                            <span class="text-slate-400">Est. MW:</span>
+                            <span class="text-white ml-1">~75 MW</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Card 2 -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-emerald-500/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                        <span class="text-emerald-400 text-sm font-medium">New Structure</span>
+                    </div>
+                    <h4 class="text-white font-medium">Building 3 - Support Facility</h4>
+                    <p class="text-slate-400 text-sm mt-1">Power distribution and cooling infrastructure</p>
+                    <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-600/50 rounded px-2 py-1">
+                            <span class="text-slate-400">Area:</span>
+                            <span class="text-white ml-1">95,000 sqft</span>
+                        </div>
+                        <div class="bg-slate-600/50 rounded px-2 py-1">
+                            <span class="text-slate-400">Stage:</span>
+                            <span class="text-white ml-1">90% Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Card 3 -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-yellow-500/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                        <span class="text-yellow-400 text-sm font-medium">Equipment Added</span>
+                    </div>
+                    <h4 class="text-white font-medium">Power Generation</h4>
+                    <p class="text-slate-400 text-sm mt-1">Gas generators and turbines installed</p>
+                    <div class="mt-3 space-y-1 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">2.5MW Gas Generators:</span>
+                            <span class="text-white">14 units → 35 MW</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">16MW Truck Turbines:</span>
+                            <span class="text-white">5 units → 80 MW</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Card 4 -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-blue-500/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        <span class="text-blue-400 text-sm font-medium">Infrastructure</span>
+                    </div>
+                    <h4 class="text-white font-medium">Cooling System Expansion</h4>
+                    <p class="text-slate-400 text-sm mt-1">Open cooling tower array installed</p>
+                    <div class="mt-3 space-y-1 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Cooling Towers:</span>
+                            <span class="text-white">0 → 12 units</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Est. Capacity:</span>
+                            <span class="text-white">~300 MW rejection</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Card 5 -->
+                <div class="bg-slate-700/50 rounded-lg p-4 border border-purple-500/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                        <span class="text-purple-400 text-sm font-medium">Electrical</span>
+                    </div>
+                    <h4 class="text-white font-medium">Substation Expansion</h4>
+                    <p class="text-slate-400 text-sm mt-1">TVA grid connection completed</p>
+                    <div class="mt-3 space-y-1 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Grid Connection:</span>
+                            <span class="text-white">~158 MW (TVA)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Transformers:</span>
+                            <span class="text-white">4 visible</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Export Actions -->
+            <div class="p-4 border-t border-slate-700">
+                <div class="space-y-2">
+                    <button class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 flex items-center justify-center gap-2">
+                        <i class="fas fa-file-pdf"></i>
+                        Export Change Report
+                    </button>
+                    <button class="w-full px-4 py-2 bg-slate-600 text-white rounded-lg text-sm font-medium hover:bg-slate-500 flex items-center justify-center gap-2">
+                        <i class="fas fa-table"></i>
+                        Export to Spreadsheet
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // Comparison slider functionality
+        const container = document.getElementById('comparisonContainer');
+        const slider = document.getElementById('slider');
+        const imageLeft = document.getElementById('imageLeft');
+
+        let isDragging = false;
+
+        slider.addEventListener('mousedown', () => isDragging = true);
+        document.addEventListener('mouseup', () => isDragging = false);
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+
+            slider.style.left = percentage + '%';
+            imageLeft.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        });
+
+        // Click to move slider
+        container.addEventListener('click', (e) => {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+
+            slider.style.left = percentage + '%';
+            imageLeft.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        });
+    </script>
+
+</body>
+</html>

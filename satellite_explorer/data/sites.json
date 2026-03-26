@@ -1,0 +1,50 @@
+{
+  "sites": [
+    {
+      "id": "example_site_1",
+      "name": "Example Campus",
+      "project": "Phase 1",
+      "company": "DemoCorp",
+      "location": {
+        "lat": 39.0,
+        "lng": -77.4
+      },
+      "address": "123 Demo St, Example City, VA 20100",
+      "cadence": "monthly",
+      "status": "under_construction",
+      "esri_layer_id": null,
+      "snapshots": [
+        {
+          "date": "2025-06-01",
+          "metrics": {
+            "estimated_mw": 50,
+            "building_sqft": 150000,
+            "cooling_towers": 2,
+            "generators": 4,
+            "percent_complete": 25
+          },
+          "changes": []
+        },
+        {
+          "date": "2025-12-01",
+          "metrics": {
+            "estimated_mw": 120,
+            "building_sqft": 350000,
+            "cooling_towers": 8,
+            "generators": 10,
+            "percent_complete": 60
+          },
+          "changes": [
+            {
+              "type": "equipment_added",
+              "category": "cooling_towers",
+              "delta": 6,
+              "description": "+6 cooling towers installed"
+            }
+          ]
+        }
+      ],
+      "links": {}
+    }
+  ]
+}

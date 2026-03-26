@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCII Satellite Explorer - Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .map-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .site-marker {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .site-marker:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .site-marker.active {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .timeline-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .metric-badge {
+            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255,255,255,0.95);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .dark-glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(15,23,42,0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+        }
+
+        .satellite-imagery {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%231e3a5f" width="400" height="300"/><rect fill="%23374151" x="50" y="50" width="80" height="60" rx="2"/><rect fill="%23374151" x="150" y="80" width="100" height="80" rx="2"/><rect fill="%234b5563" x="270" y="60" width="70" height="50" rx="2"/><rect fill="%23374151" x="80" y="140" width="60" height="100" rx="2"/><rect fill="%23d1d5db" x="160" y="180" width="80" height="8"/><rect fill="%23d1d5db" x="160" y="195" width="80" height="8"/><circle fill="%2360a5fa" cx="320" cy="200" r="25" opacity="0.5"/><circle fill="%2360a5fa" cx="340" cy="220" r="20" opacity="0.5"/></svg>') center/cover;
+        }
+
+        .chart-placeholder {
+            background: linear-gradient(180deg, rgba(59,130,246,0.1) 0%, rgba(16,185,129,0.1) 100%);
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between z-50 relative">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-satellite text-blue-400 text-xl"></i>
+                <span class="font-semibold text-lg">DCII Satellite Explorer</span>
+            </div>
+            <span class="text-slate-400 text-sm">|</span>
+            <span class="text-slate-400 text-sm">Infra Intelligence</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-slate-400">Last Updated:</span>
+                <span class="text-green-400">Feb 26, 2026</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                    <i class="fas fa-cog text-slate-400"></i>
+                </button>
+                <button class="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                    <i class="fas fa-question-circle text-slate-400"></i>
+                </button>
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-sm font-medium">
+                    PA
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-[calc(100vh-56px)]">
+
+        <!-- Left Sidebar - Site List -->
+        <aside class="w-80 bg-white border-r border-slate-200 flex flex-col">
+
+            <!-- Search & Filters -->
+            <div class="p-4 border-b border-slate-200">
+                <div class="relative">
+                    <input type="text" placeholder="Search sites..."
+                           class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <select class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white">
+                        <option>All Companies</option>
+                        <option>xAI</option>
+                        <option>OpenAI</option>
+                        <option>AWS</option>
+                        <option>Microsoft</option>
+                        <option>Core 42</option>
+                    </select>
+                    <select class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white">
+                        <option>All Status</option>
+                        <option>Under Construction</option>
+                        <option>Operational</option>
+                        <option>Planned</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Site List -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-2">
+                    <div class="text-xs font-semibold text-slate-500 uppercase px-3 py-2">Weekly Updates (2)</div>
+
+                    <!-- xAI Memphis - Active -->
+                    <div class="p-3 rounded-lg bg-blue-50 border-2 border-blue-500 mb-2 cursor-pointer">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="font-semibold text-slate-900">xAI Memphis</div>
+                                <div class="text-sm text-slate-600">Colossus 1 & 2</div>
+                            </div>
+                            <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                                Weekly
+                            </span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <span><i class="fas fa-bolt text-yellow-500 mr-1"></i>~300 MW</span>
+                            <span><i class="fas fa-microchip text-blue-500 mr-1"></i>200K GPUs</span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full progress-bar rounded-full" style="width: 75%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-600">75%</span>
+                        </div>
+                    </div>
+
+                    <div class="text-xs font-semibold text-slate-500 uppercase px-3 py-2 mt-4">Monthly Updates (8)</div>
+
+                    <!-- OpenAI Stargate -->
+                    <div class="p-3 rounded-lg hover:bg-slate-50 mb-2 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="font-semibold text-slate-900">OpenAI Stargate</div>
+                                <div class="text-sm text-slate-600">Abilene, TX</div>
+                            </div>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                Monthly
+                            </span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <span><i class="fas fa-bolt text-yellow-500 mr-1"></i>~500 MW</span>
+                            <span><i class="fas fa-microchip text-blue-500 mr-1"></i>TBD</span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full progress-bar rounded-full" style="width: 45%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-600">45%</span>
+                        </div>
+                    </div>
+
+                    <!-- AWS Rainier -->
+                    <div class="p-3 rounded-lg hover:bg-slate-50 mb-2 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="font-semibold text-slate-900">AWS Rainier 1</div>
+                                <div class="text-sm text-slate-600">New Carlisle, IN</div>
+                            </div>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                Monthly
+                            </span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <span><i class="fas fa-bolt text-yellow-500 mr-1"></i>~200 MW</span>
+                            <span><i class="fas fa-microchip text-blue-500 mr-1"></i>Est. 80K</span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full progress-bar rounded-full" style="width: 60%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-600">60%</span>
+                        </div>
+                    </div>
+
+                    <!-- Microsoft Fairwater -->
+                    <div class="p-3 rounded-lg hover:bg-slate-50 mb-2 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="font-semibold text-slate-900">Microsoft Fairwater</div>
+                                <div class="text-sm text-slate-600">Mt. Pleasant, WI</div>
+                            </div>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                Monthly
+                            </span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <span><i class="fas fa-bolt text-yellow-500 mr-1"></i>~250 MW</span>
+                            <span><i class="fas fa-microchip text-blue-500 mr-1"></i>TBD</span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="h-full progress-bar rounded-full" style="width: 55%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-600">55%</span>
+                        </div>
+                    </div>
+
+                    <!-- Reliance Jamnagar -->
+                    <div class="p-3 rounded-lg hover:bg-slate-50 mb-2 cursor-pointer border border-transparent hover:border-slate-200 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="font-semibold text-slate-900">Reliance</div>
+                                <div class="text-sm text-slate-600">Jamnagar, India</div>
+                            </div>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                                Monthly
+                            </span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-xs text-slate-600">
+                            <span><i class="fas fa-bolt text-yellow-500 mr-1"></i>~100 MW</span>
+                            <span><i class="fas fa-microchip text-blue-500 mr-1"></i>TBD</span>
+                        </div>
+                    </div>
+
+                    <div class="text-xs font-semibold text-slate-500 uppercase px-3 py-2 mt-4">Irregular Updates (15)</div>
+
+                    <div class="px-3 py-2 text-sm text-slate-500">
+                        <i class="fas fa-ellipsis-h mr-2"></i>15 additional sites...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Site Count Footer -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-600">Total Sites Tracked</span>
+                    <span class="font-semibold text-slate-900">25</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Map Area -->
+        <main class="flex-1 flex flex-col">
+
+            <!-- Map -->
+            <div class="flex-1 map-container relative">
+
+                <!-- Simulated Map with Site Markers -->
+                <div class="absolute inset-0 flex items-center justify-center">
+
+                    <!-- Map Controls -->
+                    <div class="absolute top-4 right-4 flex flex-col gap-2">
+                        <button class="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-slate-50">
+                            <i class="fas fa-plus text-slate-600"></i>
+                        </button>
+                        <button class="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-slate-50">
+                            <i class="fas fa-minus text-slate-600"></i>
+                        </button>
+                        <div class="w-10 h-px bg-slate-200"></div>
+                        <button class="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-slate-50">
+                            <i class="fas fa-layer-group text-slate-600"></i>
+                        </button>
+                        <button class="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-slate-50">
+                            <i class="fas fa-ruler text-slate-600"></i>
+                        </button>
+                    </div>
+
+                    <!-- Site Markers on Map (positioned absolutely) -->
+
+                    <!-- xAI Memphis (Active) -->
+                    <div class="absolute site-marker active" style="left: 55%; top: 45%;">
+                        <div class="relative">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-building text-lg"></i>
+                            </div>
+                            <!-- Metric Badge -->
+                            <div class="metric-badge absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-white text-xs font-medium">
+                                300 MW
+                            </div>
+                        </div>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap">
+                            <div class="dark-glass-panel px-3 py-1.5 rounded-lg text-white text-sm">
+                                xAI Memphis
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OpenAI Stargate -->
+                    <div class="absolute site-marker" style="left: 35%; top: 55%;">
+                        <div class="relative">
+                            <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-building text-sm"></i>
+                            </div>
+                            <div class="metric-badge absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-white text-xs font-medium">
+                                500 MW
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AWS Rainier -->
+                    <div class="absolute site-marker" style="left: 52%; top: 32%;">
+                        <div class="relative">
+                            <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-building text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Microsoft Fairwater -->
+                    <div class="absolute site-marker" style="left: 50%; top: 28%;">
+                        <div class="relative">
+                            <div class="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                                <i class="fas fa-building text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional markers (smaller, dimmed) -->
+                    <div class="absolute site-marker opacity-60" style="left: 25%; top: 40%;">
+                        <div class="w-6 h-6 bg-slate-400 rounded-full"></div>
+                    </div>
+                    <div class="absolute site-marker opacity-60" style="left: 70%; top: 60%;">
+                        <div class="w-6 h-6 bg-slate-400 rounded-full"></div>
+                    </div>
+                    <div class="absolute site-marker opacity-60" style="left: 80%; top: 35%;">
+                        <div class="w-6 h-6 bg-slate-400 rounded-full"></div>
+                    </div>
+
+                </div>
+
+                <!-- Legend -->
+                <div class="absolute bottom-24 left-4 glass-panel rounded-lg p-4 shadow-lg">
+                    <div class="text-sm font-semibold text-slate-700 mb-3">Legend</div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                            <span class="text-slate-600">xAI</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                            <span class="text-slate-600">OpenAI / Stargate</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                            <span class="text-slate-600">AWS</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-cyan-500 rounded-full"></div>
+                            <span class="text-slate-600">Microsoft</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-slate-400 rounded-full"></div>
+                            <span class="text-slate-600">Other</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Timeline Slider -->
+            <div class="bg-slate-900 px-6 py-4 border-t border-slate-700">
+                <div class="flex items-center gap-6">
+                    <button class="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-slate-600 transition-colors">
+                        <i class="fas fa-play text-white"></i>
+                    </button>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-sm">Timeline</span>
+                            <span class="text-white font-medium" id="currentDate">Feb 22, 2026</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="95" class="timeline-slider w-full">
+                        <div class="flex justify-between mt-2 text-xs text-slate-500">
+                            <span>Jan 2025</span>
+                            <span>Apr 2025</span>
+                            <span>Jul 2025</span>
+                            <span>Oct 2025</span>
+                            <span>Jan 2026</span>
+                            <span>Feb 2026</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="px-3 py-1.5 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-600">
+                            <i class="fas fa-columns mr-1"></i> Compare
+                        </button>
+                        <button class="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-download mr-1"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Right Sidebar - Site Details Panel -->
+        <aside class="w-[420px] bg-white border-l border-slate-200 flex flex-col overflow-hidden">
+
+            <!-- Site Header -->
+            <div class="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm opacity-80">xAI</div>
+                        <h2 class="text-xl font-semibold">Memphis, TN</h2>
+                        <div class="text-sm opacity-80">Colossus 1 & 2</div>
+                    </div>
+                    <button class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30">
+                        <i class="fas fa-external-link-alt text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-200">
+                <button class="flex-1 px-4 py-3 text-sm font-medium tab-active">Overview</button>
+                <button class="flex-1 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-700">Imagery</button>
+                <button class="flex-1 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-700">Changes</button>
+                <button class="flex-1 px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-700">Data</button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+                <!-- Key Metrics -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Current Metrics (Feb 22, 2026)</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 rounded-lg p-3">
+                            <div class="text-xs text-slate-500 mb-1">Estimated Power</div>
+                            <div class="text-2xl font-bold text-slate-900">~300 <span class="text-sm font-normal">MW</span></div>
+                            <div class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-arrow-up mr-1"></i>+50 MW vs last month
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-3">
+                            <div class="text-xs text-slate-500 mb-1">GPU Count (Est.)</div>
+                            <div class="text-2xl font-bold text-slate-900">200K</div>
+                            <div class="text-xs text-green-600 mt-1">
+                                <i class="fas fa-arrow-up mr-1"></i>+100K H200s
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-3">
+                            <div class="text-xs text-slate-500 mb-1">Building Area</div>
+                            <div class="text-2xl font-bold text-slate-900">780K <span class="text-sm font-normal">sqft</span></div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-3">
+                            <div class="text-xs text-slate-500 mb-1">Construction</div>
+                            <div class="text-2xl font-bold text-slate-900">75%</div>
+                            <div class="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                                <div class="h-full progress-bar rounded-full" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capacity Timeline Chart -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Capacity Growth Over Time</h3>
+                    <div class="chart-placeholder rounded-lg p-4 h-40 relative">
+                        <!-- Simulated chart -->
+                        <svg class="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3"/>
+                                    <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M0,90 Q30,85 60,80 T120,60 T180,40 T240,25 T300,15"
+                                  fill="none" stroke="#3b82f6" stroke-width="2"/>
+                            <path d="M0,90 Q30,85 60,80 T120,60 T180,40 T240,25 T300,15 L300,100 L0,100 Z"
+                                  fill="url(#chartGradient)"/>
+                        </svg>
+                        <div class="absolute bottom-2 left-2 text-xs text-slate-500">MW Capacity</div>
+                        <div class="absolute top-2 right-2 text-xs font-medium text-blue-600">~300 MW</div>
+                    </div>
+                </div>
+
+                <!-- Equipment Counts -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Equipment Detected</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-fire text-red-500 text-sm"></i>
+                                </div>
+                                <span class="text-sm text-slate-700">Gas Generators (2.5MW)</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">14</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-wind text-orange-500 text-sm"></i>
+                                </div>
+                                <span class="text-sm text-slate-700">Truck Turbines (16MW)</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">5</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-snowflake text-blue-500 text-sm"></i>
+                                </div>
+                                <span class="text-sm text-slate-700">Cooling Towers</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">12</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-bolt text-yellow-500 text-sm"></i>
+                                </div>
+                                <span class="text-sm text-slate-700">Substations</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">2</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-server text-purple-500 text-sm"></i>
+                                </div>
+                                <span class="text-sm text-slate-700">PTX Boxes (Visible)</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">~48</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Satellite Image Preview -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-slate-700">Latest Imagery</h3>
+                        <span class="text-xs text-slate-500">Feb 22, 2026</span>
+                    </div>
+                    <div class="satellite-imagery rounded-lg h-48 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                            <div class="text-white text-xs">
+                                <div class="font-medium">30cm resolution</div>
+                                <div class="opacity-80">Apollo Mapping</div>
+                            </div>
+                            <button class="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-xs hover:bg-white/30">
+                                <i class="fas fa-expand mr-1"></i> Full View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Changes -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Recent Changes Detected</h3>
+                    <div class="space-y-3">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-plus-circle text-green-500 mt-0.5"></i>
+                                <div>
+                                    <div class="text-sm font-medium text-green-900">+5 Cooling Towers Installed</div>
+                                    <div class="text-xs text-green-700">Detected Feb 22 vs Feb 11</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-arrow-up text-blue-500 mt-0.5"></i>
+                                <div>
+                                    <div class="text-sm font-medium text-blue-900">Substation Construction Progress</div>
+                                    <div class="text-xs text-blue-700">~15% visible progress since Feb 11</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-hard-hat text-amber-500 mt-0.5"></i>
+                                <div>
+                                    <div class="text-sm font-medium text-amber-900">Building 3 Foundation Started</div>
+                                    <div class="text-xs text-amber-700">New earthwork visible NW quadrant</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-700 mb-3">Related Documents</h3>
+                    <div class="space-y-2">
+                        <a href="#" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 text-sm text-blue-600">
+                            <i class="fas fa-file-powerpoint text-orange-500"></i>
+                            <span>Satellite Imagery Deck (Annotated)</span>
+                            <i class="fas fa-external-link-alt text-xs ml-auto"></i>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 text-sm text-blue-600">
+                            <i class="fas fa-file-alt text-blue-500"></i>
+                            <span>KIQ1 Narrative - xAI</span>
+                            <i class="fas fa-external-link-alt text-xs ml-auto"></i>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 text-sm text-blue-600">
+                            <i class="fas fa-file-excel text-green-500"></i>
+                            <span>DC Benchmarking Sheet</span>
+                            <i class="fas fa-external-link-alt text-xs ml-auto"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50">
+                <div class="flex gap-2">
+                    <button class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300">
+                        <i class="fas fa-edit mr-1"></i> Add Annotation
+                    </button>
+                    <button class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600">
+                        <i class="fas fa-file-export mr-1"></i> Export Report
+                    </button>
+                </div>
+            </div>
+
+        </aside>
+
+    </div>
+
+    <script>
+        // Simple interactivity demo
+        const slider = document.querySelector('.timeline-slider');
+        const dateDisplay = document.getElementById('currentDate');
+
+        const dates = [
+            'Jan 15, 2025', 'Feb 12, 2025', 'Mar 10, 2025', 'Apr 7, 2025',
+            'May 5, 2025', 'Jun 2, 2025', 'Jun 30, 2025', 'Jul 28, 2025',
+            'Aug 25, 2025', 'Sep 22, 2025', 'Oct 20, 2025', 'Nov 17, 2025',
+            'Dec 15, 2025', 'Jan 12, 2026', 'Feb 3, 2026', 'Feb 11, 2026', 'Feb 22, 2026'
+        ];
+
+        slider.addEventListener('input', (e) => {
+            const index = Math.floor((e.target.value / 100) * (dates.length - 1));
+            dateDisplay.textContent = dates[index];
+        });
+    </script>
+
+</body>
+</html>

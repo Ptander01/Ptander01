@@ -1,0 +1,35 @@
+{
+  "companies": [
+    "DemoCorp",
+    "ExampleCloud",
+    "TestHyperscale"
+  ],
+  "cadences": [
+    "weekly",
+    "monthly",
+    "irregular"
+  ],
+  "statuses": [
+    "under_construction",
+    "operational",
+    "planned",
+    "announced"
+  ],
+  "construction_stages": [
+    "site_clearing",
+    "foundation",
+    "steel_erection",
+    "roofing",
+    "fit_out",
+    "commissioning",
+    "operational"
+  ],
+  "equipment_types": [
+    "cooling_towers",
+    "chillers",
+    "generators",
+    "turbines",
+    "transformers",
+    "substations"
+  ]
+}
