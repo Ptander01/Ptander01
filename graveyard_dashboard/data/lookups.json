@@ -1,0 +1,33 @@
+{
+  "status": [
+    "BLOCKED",
+    "DELAYED",
+    "WITHDRAWN"
+  ],
+  "stage_gate": [
+    "LEGAL_LITIGATION",
+    "LEGISLATIVE_ZONING",
+    "PLANNING_LAND_USE_REVIEW"
+  ],
+  "reviewing_authority": [
+    "COURT",
+    "PLANNING_COMMISSION"
+  ],
+  "state": [],
+  "developer": [
+    "[Replace with developer list]"
+  ],
+  "tenant": [
+    "[Replace with tenant list]"
+  ],
+  "opposition_factors": [
+    "Water",
+    "Electricity",
+    "Noise",
+    "Air Quality",
+    "Environment",
+    "Property Value",
+    "Health",
+    "Other"
+  ]
+}
