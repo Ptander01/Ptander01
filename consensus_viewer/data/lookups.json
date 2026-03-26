@@ -1,0 +1,49 @@
+{
+  "company_clean": [
+    "[Replace with your company list]"
+  ],
+  "company_clean_filter": [
+    "Hyperscaler",
+    "Major Colo",
+    "Other"
+  ],
+  "country": [
+    "United States"
+  ],
+  "region": [
+    "AMER",
+    "EMEA",
+    "APAC"
+  ],
+  "facility_status": [
+    "Active",
+    "Under Construction",
+    "Announced",
+    "Planned"
+  ],
+  "source": [
+    "Source A",
+    "Source B"
+  ],
+  "state_abbr": [
+    "CA",
+    "VA",
+    "TX"
+  ],
+  "tier_order": [
+    "Hyperscaler",
+    "Major Colo",
+    "Other"
+  ],
+  "region_order": [
+    "AMER",
+    "EMEA",
+    "APAC"
+  ],
+  "facility_status_order": [
+    "Active",
+    "Under Construction",
+    "Announced",
+    "Planned"
+  ]
+}

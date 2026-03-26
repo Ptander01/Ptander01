@@ -1,0 +1,18 @@
+{
+  "generated": "2026-01-01T00:00:00",
+  "summary": {
+    "total_buildings": 0,
+    "total_capacity_mw": 0,
+    "total_capacity_gw": 0,
+    "commissioned_mw": 0,
+    "under_construction_mw": 0,
+    "planned_mw": 0,
+    "total_campuses": 0,
+    "avg_mw_per_campus": 0
+  },
+  "by_company": {},
+  "by_source": {},
+  "by_region": {},
+  "by_status": {},
+  "by_year": {}
+}
