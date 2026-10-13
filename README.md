@@ -35,10 +35,15 @@ the [brain MRI explorer](https://brain-mri-explorer.vercel.app) and a
 ## Tools
 
 **Languages** Python · TypeScript · JavaScript · SQL · R · PowerShell
+
 **Geospatial** ArcGIS Pro · arcpy · QGIS · MapLibre GL JS · deck.gl · GDAL · GeoPandas · PostGIS
+
 **Remote sensing** Satellite imagery processing · LiDAR (LAS/LAZ) · photogrammetry · UAV survey (FAA Part 107)
+
 **Analysis** pandas · NumPy · scikit-learn · spatial statistics · geographically weighted regression
+
 **Web** React · Vite · D3 · Three.js · Tailwind · FastAPI
+
 **Data** Hive · Presto · GeoJSON · file geodatabases
 
 ---
